@@ -37,7 +37,7 @@ def txn():
     amt = user_details['amount']
     note = user_details['note']
 
-    if check_balance(sender, amt) == "True":
+    if check_balance(sender, amt+0.001) == "True":
 
         try:
             # send the data to blockchain
@@ -46,11 +46,11 @@ def txn():
         except Exception as error:
             return jsonify({'message': error}), 500
 
-    elif check_balance(sender, amt) == "False":
+    elif check_balance(sender, amt+0.001) == "False":
         return jsonify({'message': f"Wallet Balance below {amt}"}), 400
 
     else:
-        return jsonify(check_balance(sender, amt)), 400
+        return jsonify(check_balance(sender, amt+0.001)), 400
 
 
 # running the API

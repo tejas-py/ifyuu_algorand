@@ -14,7 +14,7 @@ algod_client = connection.algo_conn()
 myindexer = connection.connect_indexer()
 
 
-# Payment transaction
+# Payment transaction of USDC
 @app.route('/blockchain/usdc_payment', methods=["POST"])
 def txn():
     # get the details
@@ -24,7 +24,8 @@ def txn():
     amt = int(user_details['amount'])*10**6
     note = user_details['note']
 
-    if transactions.check_balance(myindexer, sender, 1000, amt) == "True":
+    # check the balance of the asset and the wallet
+    if transactions.check_balance_asset(myindexer, sender, 1000, amt) == "True":
 
         try:
             # send the data to blockchain
@@ -33,11 +34,36 @@ def txn():
         except Exception as error:
             return jsonify({'message': error}), 500
 
-    elif transactions.check_balance(myindexer, sender, 0.001, amt) == "False":
-        return jsonify({'message': f"Wallet Balance low"}), 400
+    elif transactions.check_balance_asset(myindexer, sender, 0.001, amt) == "False":
+        return jsonify({'message': f"Wallet balance low!"}), 500
 
+    # return as a message if any error occurs
     else:
-        return jsonify(transactions.check_balance(myindexer, sender, 1000, amt)), 400
+        return jsonify(transactions.check_balance_asset(myindexer, sender, 1000, amt)), 400
+
+
+# asset opt-in transaction
+@app.route('/blockchain/usdc_optin', methods=["POST"])
+def optin_txn():
+    # get the details
+    txn_details = request.get_json()
+    sender = txn_details['sender']
+
+    # check the balance of the sender
+    if transactions.check_balance(myindexer, sender, 1000) == "True":
+
+        try:
+            txn_object = transactions.optin_txn(algod_client, sender)
+            return jsonify(txn_object), 200
+        except Exception as error:
+            return jsonify({'message': error}), 500
+
+    elif transactions.check_balance(myindexer, sender, 1000) == "False":
+        return jsonify({"message": "Wallet balance low!"}), 500
+
+    # return as a message if any error occurs
+    else:
+        return jsonify(transactions.check_balance(myindexer, sender, 1000)), 400
 
 
 # running the API

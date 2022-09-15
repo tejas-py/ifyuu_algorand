@@ -3,7 +3,7 @@ from flask_cors import CORS
 from API import connection
 import transactions
 
-# defining the flask app and setting up cors
+# defining the flask app and setting up cors for the url
 app = Flask(__name__)
 cors = CORS(app, resources={
     r"/*": {"origin": "*"}

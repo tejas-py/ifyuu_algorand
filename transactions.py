@@ -104,7 +104,4 @@ def sign_payment_txn(client, sender, mnemonic_keys, receiver, amt, note):
     transaction.wait_for_confirmation(client, tx_id)
     print(f"Transaction Successful with Transaction Id: {tx_id}")
 
-    # display results
-    transaction_response = client.pending_transaction_info(tx_id)
-
-    return {'message': transaction_response}
+    return {'message': tx_id}

@@ -1,5 +1,5 @@
 from algosdk.future import transaction
-from algosdk import encoding
+from algosdk import encoding, mnemonic
 
 # declare the asset
 asset = 10458941
@@ -82,7 +82,10 @@ def check_balance_with_asset(client, wallet_address, amt, payment_amt, asset_id=
 
 
 # sign-transaction
-def sign_payment_txn(client, sender, private_key, receiver, amt, note):
+def sign_payment_txn(client, sender, mnemonic_keys, receiver, amt, note):
+
+    # derive private key
+    private_key = mnemonic.to_private_key(mnemonic_keys)
 
     # define the params
     params = client.suggested_params()

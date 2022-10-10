@@ -72,14 +72,14 @@ def sign_txn():
     # get the details
     txn_details = request.get_json()
     sender = txn_details['sender']
-    private_key = txn_details['private_key']
+    mnemonics = txn_details['mnemonics']
     receiver = txn_details['receiver']
     amt = txn_details['amount']
     note = txn_details['transaction_note']
 
     if transactions.check_balance(algod_client, sender, 1000) == 'True':
         try:
-            singed_txn = transactions.sign_payment_txn(algod_client, sender, private_key, receiver, amt, note)
+            singed_txn = transactions.sign_payment_txn(algod_client, sender, mnemonics, receiver, amt, note)
             return jsonify(singed_txn), 200
         except Exception as error:
             return jsonify({'message': str(error)}), 500

@@ -104,5 +104,4 @@ def sign_payment_txn(client, sender, private_key, receiver, amt, note):
     # display results
     transaction_response = client.pending_transaction_info(tx_id)
 
-    return transaction_response
-
+    return {'message': transaction_response}

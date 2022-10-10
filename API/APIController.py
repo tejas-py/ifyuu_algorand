@@ -66,6 +66,32 @@ def optin_txn():
         return jsonify(transactions.check_balance(algod_client, sender, 1000)), 400
 
 
+# sign transaction
+@app.route('/blockchain/sign_transaction', methods=['POST'])
+def sign_txn():
+    # get the details
+    txn_details = request.get_json()
+    sender = txn_details['sender']
+    private_key = txn_details['private_key']
+    receiver = txn_details['receiver']
+    amt = txn_details['amount']
+    note = txn_details['transaction_note']
+
+    if transactions.check_balance(algod_client, sender, 1000) == 'True':
+        try:
+            singed_txn = transactions.sign_payment_txn(algod_client, sender, private_key, receiver, amt, note)
+            return jsonify(singed_txn), 200
+        except Exception as error:
+            return jsonify({'message': str(error)}), 500
+
+    elif transactions.check_balance(algod_client, sender, 1000) == "False":
+        return jsonify({"message": "Wallet balance low!"}), 500
+
+    # return as a message if any error occurs
+    else:
+        return jsonify(transactions.check_balance(algod_client, sender, 1000)), 400
+
+
 # running the API
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

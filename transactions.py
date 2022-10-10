@@ -91,7 +91,7 @@ def sign_payment_txn(client, sender, mnemonic_keys, receiver, amt, note):
     params = client.suggested_params()
 
     # make the transaction object
-    txn = transaction.AssetTransferTxn(sender, params, receiver, amt, index=asset, note=note)
+    txn = transaction.AssetTransferTxn(sender, params, receiver, amt*1_000_000, index=asset, note=note)
 
     print("Signing Transaction...")
     signed_txn = txn.sign(private_key)

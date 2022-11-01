@@ -21,7 +21,7 @@ def txn():
     user_details = request.get_json()
     sender = user_details['sender']
     receiver = user_details['receiver']
-    amt = int(user_details['amount'])*10**6
+    amt = int(user_details['amount']*10**6)
     note = user_details['note']
 
     # check the balance of the asset and the wallet
@@ -81,16 +81,24 @@ def sign_txn():
     sender = txn_details['sender']
     mnemonics = txn_details['mnemonics']
     receiver = txn_details['receiver']
-    amt = txn_details['amount']
+    amt = int(txn_details['amount']*10**6)
     note = txn_details['transaction_note']
 
-    sender_wallet_information = common_functions.check_balance(algod_client, sender, 1000)
+    # check the balance of the asset and the wallet
+    sender_wallet_information = common_functions.check_balance_with_asset(algod_client, sender, 1000, amt)
     if sender_wallet_information == 'True':
-        try:
-            singed_txn = transactions.sign_payment_txn(algod_client, sender, mnemonics, receiver, amt, note)
-            return jsonify(singed_txn), 200
-        except Exception as error:
-            return jsonify({'message': str(error)}), 500
+
+        # Check receiver wallet and if he has optin to the asset
+        receiver_wallet_information = common_functions.check_receiver_wallet(algod_client, receiver)
+        if receiver_wallet_information == "True":
+            try:
+                # send the data to blockchain
+                singed_txn = transactions.sign_payment_txn(algod_client, sender, mnemonics, receiver, amt, note)
+                return jsonify(singed_txn), 200
+            except Exception as error:
+                return jsonify({'message': str(error)}), 500
+        else:
+            return jsonify(receiver_wallet_information), 400
 
     elif sender_wallet_information == "False":
         return jsonify({"message": "Wallet balance low!"}), 500

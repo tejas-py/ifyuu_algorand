@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import transactions, common_functions
 from API import connection
-import transactions
 
 # defining the flask app and setting up cors for the url
 app = Flask(__name__)
@@ -25,11 +25,11 @@ def txn():
     note = user_details['note']
 
     # check the balance of the asset and the wallet
-    sender_wallet_information = transactions.check_balance_with_asset(algod_client, sender, 1000, amt)
+    sender_wallet_information = common_functions.check_balance_with_asset(algod_client, sender, 1000, amt)
     if sender_wallet_information == "True":
 
         # Check receiver wallet and if he has optin to the asset
-        receiver_wallet_information = transactions.check_receiver_wallet(algod_client, receiver)
+        receiver_wallet_information = common_functions.check_receiver_wallet(algod_client, receiver)
         if receiver_wallet_information == "True":
             try:
                 # send the data to blockchain
@@ -56,7 +56,7 @@ def optin_txn():
     sender = txn_details['sender']
 
     # check the balance of the sender
-    sender_wallet_information = transactions.check_balance(algod_client, sender, 1000)
+    sender_wallet_information = common_functions.check_balance(algod_client, sender, 1000)
     if sender_wallet_information == "True":
 
         try:
@@ -65,7 +65,7 @@ def optin_txn():
         except Exception as error:
             return jsonify({'message': str(error)}), 500
 
-    elif transactions.check_balance(algod_client, sender, 1000) == "False":
+    elif sender_wallet_information == "False":
         return jsonify({"message": "Wallet balance low!"}), 500
 
     # return as a message if any error occurs
@@ -84,7 +84,7 @@ def sign_txn():
     amt = txn_details['amount']
     note = txn_details['transaction_note']
 
-    sender_wallet_information = transactions.check_balance(algod_client, sender, 1000)
+    sender_wallet_information = common_functions.check_balance(algod_client, sender, 1000)
     if sender_wallet_information == 'True':
         try:
             singed_txn = transactions.sign_payment_txn(algod_client, sender, mnemonics, receiver, amt, note)
@@ -92,7 +92,7 @@ def sign_txn():
         except Exception as error:
             return jsonify({'message': str(error)}), 500
 
-    elif transactions.check_balance(algod_client, sender, 1000) == "False":
+    elif sender_wallet_information == "False":
         return jsonify({"message": "Wallet balance low!"}), 500
 
     # return as a message if any error occurs

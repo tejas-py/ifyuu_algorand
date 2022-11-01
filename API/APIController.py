@@ -25,21 +25,27 @@ def txn():
     note = user_details['note']
 
     # check the balance of the asset and the wallet
-    if transactions.check_balance_with_asset(algod_client, sender, 1000, amt) == "True":
+    sender_wallet_information = transactions.check_balance_with_asset(algod_client, sender, 1000, amt)
+    if sender_wallet_information == "True":
 
-        try:
-            # send the data to blockchain
-            txn_object = transactions.payment_txn(algod_client, sender, receiver, amt, note)
-            return jsonify(txn_object), 200
-        except Exception as error:
-            return jsonify({'message': str(error)}), 500
+        # Check receiver wallet and if he has optin to the asset
+        receiver_wallet_information = transactions.check_receiver_wallet(algod_client, receiver)
+        if receiver_wallet_information == "True":
+            try:
+                # send the data to blockchain
+                txn_object = transactions.payment_txn(algod_client, sender, receiver, amt, note)
+                return jsonify(txn_object), 200
+            except Exception as error:
+                return jsonify({'message': str(error)}), 500
+        else:
+            return jsonify(receiver_wallet_information), 400
 
-    elif transactions.check_balance_with_asset(algod_client, sender, 0.001, amt) == "False":
+    elif sender_wallet_information == "False":
         return jsonify({'message': f"Wallet balance low!"}), 500
 
     # return as a message if any error occurs
     else:
-        return jsonify(transactions.check_balance_with_asset(algod_client, sender, 1000, amt)), 400
+        return jsonify(sender_wallet_information), 400
 
 
 # asset opt-in transaction
@@ -50,7 +56,8 @@ def optin_txn():
     sender = txn_details['sender']
 
     # check the balance of the sender
-    if transactions.check_balance(algod_client, sender, 1000) == "True":
+    sender_wallet_information = transactions.check_balance(algod_client, sender, 1000)
+    if sender_wallet_information == "True":
 
         try:
             txn_object = transactions.optin_txn(algod_client, sender)
@@ -63,7 +70,7 @@ def optin_txn():
 
     # return as a message if any error occurs
     else:
-        return jsonify(transactions.check_balance(algod_client, sender, 1000)), 400
+        return jsonify(sender_wallet_information), 400
 
 
 # sign transaction
@@ -77,7 +84,8 @@ def sign_txn():
     amt = txn_details['amount']
     note = txn_details['transaction_note']
 
-    if transactions.check_balance(algod_client, sender, 1000) == 'True':
+    sender_wallet_information = transactions.check_balance(algod_client, sender, 1000)
+    if sender_wallet_information == 'True':
         try:
             singed_txn = transactions.sign_payment_txn(algod_client, sender, mnemonics, receiver, amt, note)
             return jsonify(singed_txn), 200
@@ -89,7 +97,7 @@ def sign_txn():
 
     # return as a message if any error occurs
     else:
-        return jsonify(transactions.check_balance(algod_client, sender, 1000)), 400
+        return jsonify(sender_wallet_information), 400
 
 
 # running the API

@@ -1,5 +1,5 @@
-from algosdk.future import transaction
-from algosdk import encoding
+from algosdk.future.transaction import *
+from algosdk import encoding, mnemonic
 
 # declare the asset
 asset = 10458941
@@ -12,7 +12,7 @@ def payment_txn(client, sender, receiver, amt, note):
     params = client.suggested_params()
 
     # make the transaction object
-    txn = transaction.AssetTransferTxn(sender, params, receiver, amt, index=asset, note=note)
+    txn = AssetTransferTxn(sender, params, receiver, int(amt), asset, note=note)
 
     # encode the transaction object
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
@@ -27,52 +27,34 @@ def optin_txn(client, sender):
     params = client.suggested_params()
 
     # make the transaction object
-    txn = transaction.AssetTransferTxn(sender, params, sender, 0, asset)
+    txn = AssetTransferTxn(sender, params, sender, 0, asset)
     # encode the transaction object
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
 
 
-# check the balance of the account
-def check_balance(indexer_client, wallet_address, amt):
-    try:
-        account_info = indexer_client.account_info(wallet_address)
-        balance = account_info['account']['amount']
-        if balance >= amt:
-            return "True"
-        else:
-            return "False"
-    except Exception as error:
-        return {'message': error}
+# sign-transaction
+def sign_payment_txn(client, sender, mnemonic_keys, receiver, amt, note):
+    # derive private key
+    private_key = mnemonic.to_private_key(mnemonic_keys)
 
+    # define the params
+    params = client.suggested_params()
+    params.fee = 1000
+    params.flat_fee = True
 
-# check the wallet address and the amount
-def check_balance_asset(indexer_client, wallet_address, amt, payment_amt, asset_id=asset):
-    global asset_amt
-    try:
-        # check the balance in the account
-        account_info = indexer_client.account_info(wallet_address)
-        balance = account_info['account']['amount']
+    # make the transaction object
+    txn = AssetTransferTxn(sender, params, receiver, amt, asset, note=note)
 
-        try:
-            # search if asset amount and if asset exist or not
-            assets_list = account_info['account']['assets']
-            for one_asset in assets_list:
-                if asset_id == one_asset['asset-id']:
-                    asset_amt = one_asset['amount']
-                    break
-                else:
-                    asset_amt = 0
-        # If the asset doesn't exist return the message
-        except Exception as asset_error:
-            return {'message':  f'Error: {asset_error}! USDC does not exist in the account.'}
+    print("Signing Transaction...")
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
 
-        # check if the balance is satisfied
-        if balance >= amt and asset_amt >= payment_amt:
-            return "True"
-        else:
-            return "False"
-    # return if any error occurs
-    except Exception as error:
-        return {'message': error}
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+    wait_for_confirmation(client, tx_id)
+    print(f"Transaction Successful with Transaction Id: {tx_id}")
+    return {'message': tx_id}

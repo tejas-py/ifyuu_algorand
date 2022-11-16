@@ -1,8 +1,19 @@
 from algosdk.future.transaction import *
 from algosdk import encoding, mnemonic
+from API.connection import connect_indexer
 
 # declare the asset
 asset = 10458941
+
+# indexer client
+indexer_client = connect_indexer()
+
+
+# get the current rount
+def blockchain_round():
+    res = indexer_client.health()
+    latest_round = res['round']
+    return latest_round
 
 
 # USDC asset transfer transaction
@@ -10,6 +21,10 @@ def payment_txn(client, sender, receiver, amt, note):
 
     # define the params
     params = client.suggested_params()
+    params.fee = 1000
+    params.flat_fee = True
+    params.first_valid_round = blockchain_round()
+    params.last_valid_round = blockchain_round() + 10
 
     # make the transaction object
     txn = AssetTransferTxn(sender, params, receiver, int(amt), asset, note=note)
@@ -58,3 +73,6 @@ def sign_payment_txn(client, sender, mnemonic_keys, receiver, amt, note):
     wait_for_confirmation(client, tx_id)
     print(f"Transaction Successful with Transaction Id: {tx_id}")
     return {'message': tx_id}
+
+
+blockchain_round()

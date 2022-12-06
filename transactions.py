@@ -13,6 +13,7 @@ indexer_client = connect_indexer()
 def blockchain_round():
     res = indexer_client.health()
     latest_round = res['round']
+    # print()
     return latest_round
 
 
@@ -21,14 +22,10 @@ def payment_txn(client, sender, receiver, amt, note):
 
     # define the params
     params = client.suggested_params()
-    params.fee = 1000
-    params.flat_fee = True
-    params.first_valid_round = blockchain_round()
-    params.last_valid_round = blockchain_round() + 10
 
     # make the transaction object
     txn = AssetTransferTxn(sender, params, receiver, int(amt), asset, note=note)
-
+    print(txn)
     # encode the transaction object
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
